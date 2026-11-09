@@ -6,7 +6,21 @@
 <meta property="og:title" content="حفل خطوبة عبدالرحمن و يارا">
 <meta property="og:description" content="الجمعة ١ يناير ٢٠٢٧ · الساعة ٤ مساءً">
 <meta property="og:image" content="couple.jpg">
-<style>body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<style>body{margin:0}img{max-width:100%}[hidden]{display:none!important}  .yt { position: fixed; width: 1px; height: 1px; left: -10px; bottom: 0; opacity: 0; pointer-events: none; }
+  .music {
+    position: fixed; z-index: 30;
+    bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+    left: max(16px, env(safe-area-inset-left, 0px));
+    width: 48px; height: 48px; border-radius: 50%; border: 0;
+    background: var(--wine); color: #f7ecd9; display: grid; place-items: center; cursor: pointer;
+    box-shadow: 0 6px 16px -6px rgb(90 20 24 / .7);
+    transition: transform .2s var(--ease), opacity .4s;
+  }
+  .music svg { width: 22px; height: 22px; }
+  .music:focus-visible { outline: 2px solid var(--wine); outline-offset: 3px; }
+  .music.playing svg { animation: spin 4s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
 </head>
 <body>
 <title>خطوبة عبدالرحمن و يارا</title>
@@ -324,12 +338,48 @@
   </article>
 </main>
 
+<div class="yt" aria-hidden="true"><div id="yt"></div></div>
+<button class="music" id="music" type="button" aria-label="تشغيل الموسيقى" hidden>
+  <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M9 18.5a3 3 0 1 1-2-2.83V5l12-2v12.5a3 3 0 1 1-2-2.83V7.4L9 8.7v9.8z"/></svg>
+</button>
+
+<script>
+  // Background music: YouTube embed, started by the seal tap (browsers block sound before a tap).
+  const VIDEO_ID = "T49awMWYG0A";
+  let player = null, wantPlay = false;
+  const musicBtn = document.getElementById("music");
+  window.onYouTubeIframeAPIReady = () => {
+    player = new YT.Player("yt", {
+      width: 1, height: 1, videoId: VIDEO_ID,
+      playerVars: { autoplay: 0, controls: 0, loop: 1, playlist: VIDEO_ID, playsinline: 1 },
+      events: {
+        onReady: () => { if (wantPlay) player.playVideo(); },
+        onStateChange: (e) => {
+          const playing = e.data === YT.PlayerState.PLAYING;
+          musicBtn.classList.toggle("playing", playing);
+          musicBtn.setAttribute("aria-label", playing ? "إيقاف الموسيقى" : "تشغيل الموسيقى");
+        },
+      },
+    });
+  };
+  function startMusic() {
+    wantPlay = true;
+    musicBtn.hidden = false;
+    if (player && player.playVideo) player.playVideo();
+  }
+  musicBtn.addEventListener("click", () => {
+    if (!player || !player.getPlayerState) return;
+    player.getPlayerState() === YT.PlayerState.PLAYING ? player.pauseVideo() : player.playVideo();
+  });
+</script>
+<script src="https://www.youtube.com/iframe_api" async></script>
+
 <script>
   // ponytail: RSVP goes out as a prefilled WhatsApp message — guests on a public link can't write to a shared store.
   const WHATSAPP_NUMBER = ""; // international format, digits only, e.g. 201001234567
 
   const body = document.body;
-  const open = () => body.classList.add("open");
+  const open = () => { body.classList.add("open"); startMusic(); };
   document.getElementById("cover").addEventListener("click", open);
   document.getElementById("cover").addEventListener("keydown", (e) => {
     if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(); }
